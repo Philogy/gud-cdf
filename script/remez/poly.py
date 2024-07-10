@@ -3,16 +3,14 @@ from mpmath import mpf, diff, polyval, fabs, sign, exp
 from .utils import find_extrema, solve_lin
 
 
-def show_poly(coeffs: list[mpf], d: int = 4):
+def show_poly(coeffs: list[mpf], d: int = 4) -> str:
     l = [
-        f'{float(c):.{d}f}\\cdot x^{{{i}}}'
+        f'{"+" if c > 0 else ""}{float(c):.{d}f}\\cdot x^{{{i}}}'
         for i, c in enumerate(coeffs)
+        if c
     ]
 
-    print(*[
-        ' ' + s if i == 0 or c < 0 else f' + {s}'
-        for i, (s, c) in enumerate(zip(l, coeffs))
-    ])
+    return ' '.join(l)
 
 
 def poly_remez(

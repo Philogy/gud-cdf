@@ -1,21 +1,37 @@
 from typing import Callable
-from mpmath import mpf, polyval, findroot
-from .utils import solve_lin
+from mpmath import mpf, polyval, findroot, fabs
+from .utils import solve_lin, get_signs, full_range, find_extremas, select_extremas
+from .poly import show_poly
 
 
-def rational(ps: list[mpf], qs: list[mpf]) -> Callable[[mpf], mpf]:
-    cs = ps[::-1]
-    bs = qs[::-1] + [0]
-    return lambda x: polyval(cs, x) / (mpf(1) + polyval(bs, x))
+class Rational:
+    ps: list[mpf]
+    qs: list[mpf]
+
+    def __init__(self, ps: list[mpf], qs: list[mpf]) -> None:
+        self.ps = ps
+        self.qs = qs
+
+    def p(self, x: mpf) -> mpf:
+        return polyval(self.ps, x)
+
+    def q(self, x: mpf) -> mpf:
+        return polyval(self.qs, x)
+
+    def show(self, d: int = 20) -> str:
+        return f'\\frac{{{show_poly(self.ps[::-1], d=d)}}}{{{show_poly(self.qs[::-1], d=d)}}}'
+
+    def __call__(self, x: mpf) -> mpf:
+        return self.p(x) / self.q(x)
 
 
-def _solve_and_get_error(
+def _solve_with_assumed_error(
     n: int, m: int,
     guessed_err: mpf,
     ref: list[mpf],
     ys: list[mpf]
 ) -> tuple[list[mpf], list[mpf], mpf]:
-    signs = [(1, -1)[i % 2] for i in range(len(ref))]
+    signs = get_signs(len(ref))
 
     matrix = [
         [
@@ -38,14 +54,31 @@ def _solve_and_get_error(
     return ps, qs, solved_err
 
 
+def _solve_rational(
+    n: int, m: int,
+    ref: list[mpf],
+    ys: list[mpf]
+) -> tuple[list[mpf], list[mpf], mpf]:
+    def error_error(guessed_err: mpf) -> mpf:
+        _, _, err = _solve_with_assumed_error(n, m, guessed_err, ref, ys)
+        return err - guessed_err
+
+    found_err = findroot(error_error, mpf(0))
+    return _solve_with_assumed_error(n, m, found_err, ref, ys)
+
+
 def rational_remez(
     n: int,
     m: int,
     start: mpf,
     end: mpf,
     f: Callable[[mpf], mpf],
-    tol: mpf
-) -> list[mpf]:
+    tol: mpf,
+    rounds: int = 10,
+    sample_scale: int = 80,
+    verbose: bool = False
+) -> tuple[Rational, mpf]:
+    assert rounds >= 1
     assert start < end
 
     # From [Remco's Approximation blog post](https://xn--2-umb.com/22/approximation/)
@@ -53,52 +86,36 @@ def rational_remez(
     # width
     w = n + m + 2
 
-    ref = [
-        start + (end - start) * i / (w - 1)
-        for i in range(w)
-    ]
+    ref = full_range(start, end, w)
 
-    # # Solve the non-linear equation by using a guessed error term and having them converge
-    # while True:
-    #     # Generalized for arbitrary rational function
-    #     matrix = [
-    #         [
-    #             xi ** j
-    #             for j in range(0, n + 1)
+    peak_err = None
+    approx = Rational([], [])
 
-    #         ] + [
-    #             (s * guessed_err - yi) * xi ** j
-    #             for j in range(1, m + 1)
-    #         ] + [s]
-    #         for xi, yi, s in zip(ref, ys, signs)
-    #     ]
-    #     # for row in matrix:
-    #     #     print(row)
+    for _ in range(rounds):
+        ys = list(map(f, ref))
 
-    #     params = solve_lin(matrix, ys)
-    #     err = params[-1]
+        ps, qs, _ = _solve_rational(n, m, ref, ys)
+        qs = [mpf(1)] + qs
 
-    #     if almosteq(guessed_err, err, tol):
-    #         break
+        approx = Rational(ps[::-1], qs[::-1])
 
-    #     guessed_err = (err + guessed_err) / mpf(2)
+        def err(x):
+            return f(x) - approx(x)
 
-    # ps = params[:n+1]
-    # qs = params[n+1:n+1+m]
-    # approx_f = rational(ps, qs)
+        extremas = find_extremas(err, start, end, tol, w * sample_scale)
+        errors = list(map(err, extremas))
 
-    # points = [start] + ref + [end]
+        ref = select_extremas(extremas, errors, w)
+        new_peak_err = max(map(fabs, map(err, ref)))
 
-    # def err_func(x):
-    #     return fabs(f(x) - approx_f(x))
+        if new_peak_err == peak_err:
+            break
+        peak_err = new_peak_err
 
-    # # for a, b in zip(points[:-1], points[1:]):
-    # #     x_maxed = findroot(lambda x: diff(err_func, x), (a + b) / 2)
-    # #     print(f'x_maxed: {x_maxed} ({err_func(x_maxed)})')
+        if verbose:
+            print(approx.show())
+            print(f'peak_err: {peak_err}')
 
-    # print(err, guessed_err)
+    assert peak_err is not None
 
-    # for x, s in zip(ref, signs):
-    #     print(approx_f(x) + s * guessed_err, f(x))
-
-    return []
+    return approx, peak_err
