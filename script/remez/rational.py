@@ -106,7 +106,11 @@ def rational_remez(
         errors = list(map(err, extremas))
 
         ref = select_extremas(extremas, errors, w)
-        new_peak_err = max(map(fabs, map(err, ref)))
+
+        def rel_err(x):
+            return fabs(mpf(1) - f(x) / approx(x))
+
+        new_peak_err = max(map(rel_err, ref))
 
         if new_peak_err == peak_err:
             break

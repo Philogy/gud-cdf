@@ -8,7 +8,7 @@ mp.dps = 60
 mp.pretty = True
 
 WAD = 10**18
-POW = 96
+POW = 80
 X128_ONE = 1 << POW
 
 
@@ -50,7 +50,7 @@ def make_poly(coeffs: list[int], var_in: str, var_out: str) -> str:
         # if c == 0:
         #     s += f'{var_out} := sar(128, mul({var_out}, {var_in})), {hex(c)}\n'
         # else:
-        s += f'{var_out} := add(sar({POW}, mul({var_out}, {var_in})), {hex(c)})\n'
+        s += f'{var_out} := add(sar(POW, mul({var_out}, {var_in})), {hex(c)})\n'
     return s
 
 
@@ -84,8 +84,22 @@ class Func:
         qs, q = normalize(self.inner_fn.qs.copy())
 
         first = p / q
+        max_err_x = mpf('6.21976155')
+        if self.start <= max_err_x <= self.end:
+            acc = mpf(0)
+            print(f'ps: {ps}')
+            print(f'qs: {qs}')
+            for c in ps:
+                acc = acc * max_err_x + c
+                print(f'  acc: {acc}')
+            acc = mpf(0)
+            print('qs:')
+            for c in qs:
+                acc = acc * max_err_x + c
+                print(f'  acc: {acc}')
 
-        # alt_fn = Rational(ps, qs)
+        alt_fn = Rational(ps, qs)
+        print(f'erf({max_err_x}) = {first * alt_fn(max_err_x)}')
         # n = 5
         # for i in range(n):
         #     x = (self.end - self.start) * i / (n - 1) + self.start
@@ -125,7 +139,7 @@ def codify_ranges(
                 s += '}\n'
         if has_end:
             if_count.append(ifs + len(fns))
-            s += f'{var_out} := {WAD}\n'
+            s += f'{var_out} := 0\n'
             s += f'break\n'
         return s
 
@@ -156,5 +170,3 @@ delta = min(
 
 
 print(codify_ranges('z', 'y', funcs, True))
-
-# ifs: [3, 4, 5, 3, 4, 3, 4, 5, 3, 3] (37)

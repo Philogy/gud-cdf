@@ -1,37 +1,49 @@
-from mpmath import *
+from mpmath import erf, mp, mpf, fabs, sqrt
+from codifier import Func
+import sys
+import json
 
-mp.dps = 15
+mp.dps = 60
 mp.pretty = True
-one = mpf(1)
 
 
-def erf_sqrt(x):
-    return erf(x / sqrt(2))
+def cdf(x):
+    return (mpf(1) + erf(x / sqrt(2))) / mpf(2)
 
 
-M = 8
-N = 8
+print(cdf(mpf('1.2')))
 
-a = taylor(erf_sqrt, 1.2, M + N)
-p, q = pade(a, M, N)
-p = p[::-1]
-q = q[::-1]
+path = 'result.json' if len(sys.argv) < 2 else sys.argv[1]
 
-# x = 0.23
-# res = polyval(p, x)/polyval(q, x)
+with open(path, 'r') as f:
+    funcs = list(map(Func.from_json, json.load(f)))
 
 
-def show_poly(coeffs: list[int]) -> str:
-    items = [
-        {
-            0: f'{float(c):.9f}',
-            1: f'{float(c):.9f}\\cdot x'
-        }.get(i, f'{float(c):.9f}\\cdot x^{i}')
-        for i, c in enumerate(coeffs[::-1])
-        if c
-    ]
-    return ' + '.join(items[::-1])
+def approx_erf(x: mpf) -> mpf:
+    z = fabs(x)
+    for fn in funcs:
+        if z <= fn.end:
+            y = fn.inner_fn(z)
+            break
+    y = mpf(1)
+    if x < 0:
+        y = -y
+    return y
 
 
-print(show_poly(p))
-print(show_poly(q))
+def approx_cdf(x: mpf) -> mpf:
+    return (mpf(1) + approx_erf(x)) / mpf(2)
+
+
+xs = [
+    mpf('-6.121045594144430842'),
+    mpf('-6.019023504161353321'),
+    mpf('-6.219761545359106298')
+]
+
+for x in xs:
+    y = cdf(x)
+    approx_y = approx_cdf(x)
+    err = fabs(approx_y - y)
+    print(f'cdf({float(x):.8f}) = {float(y):.8f}; {
+          float(approx_y):.8f} [{err}]')

@@ -18,8 +18,8 @@ END = erfinv(mpf('1.0') - mpf('1.0e-18'))
 DEFAULT_ROUNDS = 20
 
 
-def erf_sqrt(x):
-    return erf(x / sqrt(2))
+def erfc(x):
+    return mpf(1) - erf(x / sqrt(2))
 
 
 def safe_run_remez(start: mpf, end: mpf, fn: Callable[[mpf], mpf]) -> tuple[Rational, None | mpf]:
@@ -48,37 +48,13 @@ def build_tree_fn(start: mpf, end: mpf, fn: Callable[[mpf], mpf]) -> list[tuple[
     return [(start, end, res_fn, peak_err)]
 
 
-# fn, peak_err = rational_remez(
-#     N, M,
-#     mpf(0.5), mpf(2.5),
-#     erf_sqrt, TOLERANCE,
-#     rounds=DEFAULT_ROUNDS
-# )
-
-# print(f'ps: {fn.ps}')
-# print(f'qs: {fn.qs}')
-
-
-# print(f'peak_err: {peak_err}')
-# print(fn.show())
-
-
-funcs = build_tree_fn(START, END, erf_sqrt)
+funcs = build_tree_fn(START, END, erfc)
 
 print(f'len(funcs): {len(funcs)}')
 print(f'done')
 
 path = 'result.json' if len(sys.argv) < 2 else sys.argv[1]
 
-n = 4
-
-for start, end, fn, err in funcs:
-    print()
-    print(f'fn.ps: {fn.ps}')
-    print(f'fn.qs: {fn.qs}')
-    for i in range(n):
-        x = (end - start) * i / (n - 1) + start
-        print(f'f({float(x):.4f}) = {float(fn(x)):.4f} [{float(erf_sqrt(x)):.4f}]')
 
 print(f'saving to {path}')
 with open(path, 'w') as f:
