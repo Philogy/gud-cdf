@@ -84,29 +84,6 @@ class Func:
         qs, q = normalize(self.inner_fn.qs.copy())
 
         first = p / q
-        max_err_x = mpf('6.21976155')
-        if self.start <= max_err_x <= self.end:
-            acc = mpf(0)
-            print(f'ps: {ps}')
-            print(f'qs: {qs}')
-            for c in ps:
-                acc = acc * max_err_x + c
-                print(f'  acc: {acc}')
-            acc = mpf(0)
-            print('qs:')
-            for c in qs:
-                acc = acc * max_err_x + c
-                print(f'  acc: {acc}')
-
-        alt_fn = Rational(ps, qs)
-        print(f'erf({max_err_x}) = {first * alt_fn(max_err_x)}')
-        # n = 5
-        # for i in range(n):
-        #     x = (self.end - self.start) * i / (n - 1) + self.start
-        #     print(
-        #         f'erf({float(x):.4f}) = {float(first * alt_fn(x))
-        #               :.8f} ({float(self.inner_fn(x)):.8f}) -> {float(le_func(x)):.8f}'
-        #     )
 
         s += make_poly(list(map(to_x128, ps)), var_in, 'num')
         s += make_poly(list(map(to_x128, qs)), var_in, 'denom')
