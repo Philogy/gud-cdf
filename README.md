@@ -15,8 +15,8 @@ efficient than comparable libraries like [solstat's Gaussian](https://github.com
 
 ## Methodology
 
-The core objective was to approximate either $\text{erf} (z)$ or $\text{erfc}(z)$ (which is just
-$1 - \text{erf}(z)$). Libraries like solstat or [errcw/gaussian](https://github.com/errcw/gaussian/blob/master/lib/gaussian.js) do this by finding a polynomial $p$ such that $e^p(x)$ approximates the desired error function. This approach is sub-optimal in the EVM as $e^x$ is itself an approximation.
+The core objective was to approximate either $\text{erf} (z)$ or $\text{erfc} (z)$ (which is just
+$1 - \text{erf} (z) $). Libraries like solstat or [errcw/gaussian](https://github.com/errcw/gaussian/blob/master/lib/gaussian.js) do this by finding a polynomial $p$ such that $e^p(x)$ approximates the desired error function. This approach is sub-optimal in the EVM as $e^x$ is itself an approximation.
 
 I therefore opted to approximate the error function itself using a rational approximation, finding
 tow polynomials $p$ and $q$ such that $\frac{p(x)}{q(x)}$ give the desired accuracy. This was done
