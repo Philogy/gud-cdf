@@ -398,13 +398,13 @@ library CDF {
         }
     }
 
-    function cdf(int256 x, int256 gamma, uint256 sigma) internal pure returns (uint256) {
+    function cdf(int256 x, int256 mu, uint256 sigma) internal pure returns (uint256) {
         // cdf(x) = erfc(-x) / 2
         int256 base2X;
         assembly ("memory-safe") {
-            let num := sub(gamma, x)
+            let num := sub(mu, x)
             // Signed subtraction overflow/underflow check.
-            let noError := eq(slt(num, gamma), sgt(x, 0))
+            let noError := eq(slt(num, mu), sgt(x, 0))
             let z := shl(POW, num)
             // Check shift overflow.
             noError := and(noError, eq(sar(POW, z), num))
