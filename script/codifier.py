@@ -8,7 +8,7 @@ mp.dps = 60
 mp.pretty = True
 
 WAD = 10**18
-POW = 80
+POW = 96
 X128_ONE = 1 << POW
 
 
