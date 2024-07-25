@@ -11,8 +11,8 @@ mp.pretty = True
 TOLERANCE = mpf('1.0e-30')
 TARGET_ERROR = mpf('1.0e-8')
 
-N = 4
-M = 4
+N = 3
+M = 3
 START = mpf(0)
 END = erfinv(mpf('1.0') - mpf('1.0e-18'))
 DEFAULT_ROUNDS = 20

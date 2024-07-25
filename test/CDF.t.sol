@@ -81,10 +81,9 @@ contract CDFTest is Test {
         return ((x * 1e18) >> CDF.POW).formatDecimals(18);
     }
 
-    function _update(ErrorTracker memory tracker, uint256 y, uint256 out) internal returns (uint256 error) {
+    function _update(ErrorTracker memory tracker, uint256 y, uint256 out) internal pure returns (uint256 error) {
         if (out == 0) return 0;
-        uint256 relError = y * 1e18 / out;
-        error = relError < 1e18 ? 1e18 - relError : relError - 1e18;
+        error = y < out ? out - y : y - out;
         tracker.total += error;
         tracker.max = tracker.max < error ? error : tracker.max;
         tracker.n++;

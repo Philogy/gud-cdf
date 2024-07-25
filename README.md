@@ -4,7 +4,7 @@ This repo contains code to generate as well as a specific instance of a normal d
 (cumulative distribution function) implemented in Solidity.
 
 The `CDF.cdf` function operates on WAD numbers (fixed point numbers with scale 10^18) and achieves
-8-digit accuracy (max relative error $|1 - \frac{f(x)}{f'(x)}| \lt 10^{-8}$) while being 8x more gas
+8-digit accuracy (max error $|f(x) - f'(x)| \lt 10^{-8}$) while being 9x more gas
 efficient than comparable libraries like [solstat's Gaussian](https://github.com/primitivefinance/solstat/blob/main/src/Gaussian.sol).
 
 ## Project Setup
